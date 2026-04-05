@@ -52,7 +52,7 @@
         .controls-panel {
             width: 340px;
             height: 100vh;
-            background-color: #f5f5f5;
+            background-color: #000000;
             border-left: 1px solid #ddd;
             padding: 15px;
             box-sizing: border-box;
@@ -134,6 +134,7 @@
         <option value="MS PGothic">
         <option value="HG丸ｺﾞｼｯｸM-PRO">
         <option value="HG行書体">
+        <option value="クラフト明朝">
         <option value="Hiragino Kaku Gothic ProN">
         <option value="ビルの谷間と高架下 フリー版">
         <option value="Arial Black">
@@ -151,13 +152,11 @@
 
         <div class="setting-group">
             <div class="section-title">背景設定</div>
-            <label>ファイル選択</label>
             <input type="file" id="bg-upload" accept="image/*">
         </div>
 
         <div class="setting-group">
             <div class="section-title">題名設定</div>
-            <label>タイトルの文字設定（内容）</label>
             <input type="text" id="title-input" placeholder="投票時間" oninput="applyStyles()">
             
             <div class="input-row">
@@ -178,10 +177,9 @@
 
         <div class="setting-group">
             <div class="section-title">タイマー設定</div>
-            <label>タイマーの文字設定</label>
             <div class="input-row">
                 <div style="flex: 2;">
-                    <label>フォント</label>
+                    <label>フォント（入力/選択）</label>
                     <input type="text" id="timer-font" list="font-list" value="Arial Black" oninput="applyStyles()" onfocus="this.value=''">
                 </div>
                 <div>
