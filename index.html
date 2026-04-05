@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カスタムタイマー v3</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            background-color: #ffffff;
+            background-size: cover;
+            background-position: center;
+            font-family: "Meiryo", sans-serif;
+            overflow: hidden;
+        }
+
+        /* メイン表示エリア（パネルを除いた全域） */
+        .main-view {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        /* タイトル表示（未入力時は非表示） */
+        #title-display {
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+        }
+
+        #timer-display {
+            line-height: 1;
+            user-select: none;
+        }
+
+        /* 右側操作パネル */
+        .controls {
+            width: 320px;
+            background: rgba(255, 255, 255, 0.95);
+            border-left: 1px solid #ddd;
+            padding: 20px;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            font-size: 13px;
+        }
+
+        h3 { margin-top: 0; border-bottom: 2px solid #333; padding-bottom: 5px; }
+
+        .setting-group {
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label { font-weight: bold; display: block; margin-bottom: 3px; }
+
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 6px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        /* 時間プルダウンを4列に */
+        .time-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+        }
+        .time-grid div { text-align: center; font-size: 10px; }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        button {
+            padding: 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            color: white;
+            background: #555;
+        }
+
+        button:hover { opacity: 0.8; }
+        .btn-set { background: #007bff; grid-column: span 2; }
+        .btn-start { background: #28a745; }
+        .btn-stop { background: #dc3545; }
+    </style>
+</head>
+<body>
+
+    <div class="main-view">
+        <div id="title-display"></div>
+        <div id="timer-display">00:00</div>
+    </div>
+
+    <div class="controls">
+        <h3>タイマー設定</h3>
+
+        <div class="setting-group">
+            <label>背景画像</label>
+            <input type="file" id="bg-upload" accept="image/*">
+        </div>
+
+        <div class="setting-group">
+            <label>タイトル名（空で非表示）</label>
+            <input type="text" id="title-input" placeholder="例：プレゼン終了まで" oninput="applyAll()">
+            <label>フォント（直接入力）</label>
+            <input type="text" id="title-font" value="Meiryo" oninput="applyAll()">
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="color" id="title-color" value="#333333" oninput="applyAll()">
+                <input type="number" id="title-size" value="40" oninput="applyAll()"> px
+                <label class="checkbox-group"><input type="checkbox" id="title-bold" onchange="applyAll()"> 太字</label>
+            </div>
+        </div>
+
+        <div class="setting-group">
+            <label>タイマー・フォント</label>
+            <input type="text" id="timer-font" value="Meiryo" oninput="applyAll()">
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="color" id="timer-color" value="#000000" oninput="applyAll()">
+                <input type="number" id="timer-size" value="150" oninput="applyAll()"> px
+                <label class="checkbox-group"><input type="checkbox" id="timer-bold" checked onchange="applyAll()"> 太字</label>
+            </div>
+        </div>
+
+        <div class="setting-group">
+            <label>時間セット</label>
+            <div class="time-grid">
+                <div>10分<select id="m10"><script>for(i=0;i<=5;i++)document.write(`<option value="${i}">${i}</option>`)</script></select></div>
+                <div>1分<select id="m1"><script>for(i=0;i<=9;i++)document.write(`<option value="${i}">${i}</option>`)</script></select></div>
+                <div>10秒<select id="s10"><script>for(i=0;i<=5;i++)document.write(`<option value="${i}">${i}</option>`)</script></select></div>
+                <div>1秒<select id="s1"><script>for(i=0;i<=9;i++)document.write(`<option value="${i}">${i}</option>`)</script></select></div>
+            </div>
+            <button class="btn-set" onclick="setTime()">時間を確定してセット</button>
+        </div>
+
+        <div class="button-grid">
+            <button class="btn-start" onclick="startTimer()">スタート</button>
+            <button class="btn-stop" onclick="stopTimer()">ストップ</button>
+            <button onclick="resetTimer()" style="grid-column: span 2;">リセット</button>
+        </div>
+    </div>
+
+    <script>
+        let countdown;
+        let timeLeft = 0;
+        let isRunning = false;
+
+        const titleDisp = document.getElementById('title-display');
+        const timerDisp = document.getElementById('timer-display');
+
+        function applyAll() {
+            // タイトルの反映
+            const titleText = document.getElementById('title-input').value;
+            titleDisp.innerText = titleText;
+            titleDisp.style.display = titleText === "" ? "none" : "block";
+            titleDisp.style.fontFamily = document.getElementById('title-font').value;
+            titleDisp.style.color = document.getElementById('title-color').value;
+            titleDisp.style.fontSize = document.getElementById('title-size').value + 'px';
+            titleDisp.style.fontWeight = document.getElementById('title-bold').checked ? "bold" : "normal";
+
+            // タイマーの反映
+            timerDisp.style.fontFamily = document.getElementById('timer-font').value;
+            timerDisp.style.color = document.getElementById('timer-color').value;
+            timerDisp.style.fontSize = document.getElementById('timer-size').value + 'px';
+            timerDisp.style.fontWeight = document.getElementById('timer-bold').checked ? "bold" : "normal";
+        }
+
+        // 背景画像
+        document.getElementById('bg-upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => document.body.style.backgroundImage = `url(${ev.target.result})`;
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function setTime() {
+            stopTimer();
+            const totalSeconds = 
+                (parseInt(document.getElementById('m10').value) * 600) +
+                (parseInt(document.getElementById('m1').value) * 60) +
+                (parseInt(document.getElementById('s10').value) * 10) +
+                (parseInt(document.getElementById('s1').value));
+            timeLeft = totalSeconds;
+            updateDisplay();
+        }
+
+        function startTimer() {
+            if (isRunning || timeLeft <= 0) return;
+            isRunning = true;
+            countdown = setInterval(() => {
+                timeLeft--;
+                updateDisplay();
+                if (timeLeft <= 0) {
+                    clearInterval(countdown);
+                    isRunning = false;
+                    alert("タイムアップ！");
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(countdown);
+            isRunning = false;
+        }
+
+        function resetTimer() {
+            stopTimer();
+            timeLeft = 0;
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
+            timerDisp.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // 初期実行
+        applyAll();
+    </script>
+</body>
+</html>
