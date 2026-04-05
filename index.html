@@ -8,7 +8,6 @@
         :root {
             --title-font: "Meiryo", sans-serif;
             --timer-font: "Arial Black", sans-serif;
-            /* メインのピンク系カラーを定義 */
             --accent-pink: #db7093; 
         }
 
@@ -86,13 +85,11 @@
             background-color: white;
         }
 
-        /* 入力欄フォーカス時の枠線もピンクに */
         input:focus, select:focus {
             outline: 2px solid var(--accent-pink);
             border-color: transparent;
         }
 
-        /* 【重要】チェックボックスの色を#db7093に変更 */
         input[type="checkbox"] {
             accent-color: var(--accent-pink);
             cursor: pointer;
@@ -104,6 +101,7 @@
         .time-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin: 10px 0; }
         .time-grid div { text-align: center; font-size: 10px; }
 
+        /* 「時間をセットする！」ボタンの設定 */
         .btn-main {
             width: 100%;
             border: none;
@@ -114,16 +112,18 @@
             cursor: pointer;
             background-color: var(--accent-pink);
             color: white;
-            box-shadow: 0 4px 0 #b35272; /* 少し暗めのピンク */
+            box-shadow: 0 4px 0 #b35272;
             transition: 0.1s;
-            margin-bottom: 10px;
+            margin-bottom: 30px; /* スタートボタンとの間に空間を作成 */
         }
         .btn-main:active { transform: translateY(2px); box-shadow: 0 2px 0 #b35272; }
 
         .sub-btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .btn-sub { padding: 8px; border-radius: 4px; border: none; background: #666; color: white; cursor: pointer; font-size: 12px; font-weight: bold; }
-        .btn-start { background: #28a745; }
-        .btn-stop { background: #dc3545; }
+        
+        /* スタート・ストップボタンの色を修正 */
+        .btn-start { background: #87ceeb !important; color: #ffffff !important; } /* 文字色を白に変更 */
+        .btn-stop { background: #cd5c5c !important; }
     </style>
 </head>
 <body>
@@ -201,7 +201,6 @@
             </div>
             <button class="btn-main" onclick="setTime()">時間をセットする！</button>
             
-            <label>操作ボタン</label>
             <div class="sub-btn-group">
                 <button class="btn-sub btn-start" onclick="startTimer()">スタート</button>
                 <button class="btn-sub btn-stop" onclick="stopTimer()">ストップ</button>
@@ -263,7 +262,11 @@
             countdown = setInterval(() => {
                 timeLeft--;
                 updateDisplay();
-                if (timeLeft <= 0) { clearInterval(countdown); isRunning = false; alert("終了しました！"); }
+                if (timeLeft <= 0) { 
+                    clearInterval(countdown); 
+                    isRunning = false; 
+                    timerDisp.innerText = "終了";
+                }
             }, 1000);
         }
 
@@ -271,6 +274,7 @@
         function resetTimer() { stopTimer(); timeLeft = 0; updateDisplay(); }
 
         function updateDisplay() {
+            if (timeLeft < 0) return;
             const m = Math.floor(timeLeft / 60);
             const s = timeLeft % 60;
             timerDisp.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
